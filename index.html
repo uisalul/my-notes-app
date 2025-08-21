@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notes</title>
+    <!-- Importing a vintage-style font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* General body and theme styling */
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background-color: #f5f5dc; /* Light beige color */
+            color: #5c4033; /* Dark brown color for writing */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Main container for the entire application */
+        .app-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Title styling */
+        .app-title {
+            text-align: center;
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Add Note button styling */
+        .add-note-btn {
+            display: block;
+            margin: 0 auto 30px;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 1.2em;
+            background-color: #b8947f; /* A darker, vintage brown for the button */
+            color: #f5f5dc;
+            border: 2px solid #5c4033;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .add-note-btn:hover {
+            background-color: #a37f6d;
+            transform: translateY(-2px);
+        }
+
+        /* Note editor styling */
+        .note-editor {
+            background-color: #fff9e6; /* Slightly off-white for the editor paper */
+            border: 1px solid #dcdcdc;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: none; /* Hidden by default */
+            border: 2px solid #5c4033;
+        }
+
+        .note-editor.active {
+            display: block;
+        }
+
+        .note-editor input, .note-editor textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-family: inherit;
+            font-size: 1em;
+            background-color: transparent;
+            border: none;
+            border-bottom: 1px solid #5c4033;
+            color: #5c4033;
+        }
+
+        .note-editor input:focus, .note-editor textarea:focus {
+            outline: none;
+            border-bottom: 2px solid #5c4033;
+        }
+
+        .note-editor textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .note-editor .content-editor {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 200px;
+            margin-bottom: 15px;
+            background-color: #fffaf0;
+            white-space: pre-wrap; /* Preserve formatting */
+        }
+
+        .note-editor .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .note-editor .controls button {
+            padding: 8px 15px;
+            font-family: inherit;
+            background-color: #d8c3a5;
+            color: #5c4033;
+            border: 1px solid #5c4033;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .note-editor .controls button:hover {
+            background-color: #c7b199;
+        }
+
+        /* Styling for saved notes */
+        .notes-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .note-item {
+            position: relative;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="%23f7e6c4" /><path d="M0 0 C50 50, 150 50, 200 0" fill="none" stroke="%23c4a682" stroke-width="2"/><path d="M0 200 C50 150, 150 150, 200 200" fill="none" stroke="%23c4a682" stroke-width="2"/></svg>');
+            background-color: #f7e6c4; /* Light burnt paper color */
+            background-size: cover;
+            border: 1px solid #c4a682;
+            padding: 20px;
+            width: 250px;
+            min-height: 200px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.5s;
+            cursor: pointer;
+        }
+
+        /* Scattering the notes with random rotations */
+        .note-item:nth-child(even) {
+            transform: rotate(2deg);
+        }
+        .note-item:nth-child(odd) {
+            transform: rotate(-3deg);
+        }
+        .note-item:hover {
+            transform: rotate(0) scale(1.05);
+            z-index: 10;
+        }
+
+        .note-item h3 {
+            margin-top: 0;
+            font-size: 1.5em;
+            color: #4b3621;
+        }
+
+        .note-item p {
+            font-size: 1em;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .note-item img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #5c4033;
+            margin-top: 10px;
+        }
+
+        /* The vintage stamp effect */
+        .note-item::before {
+            content: 'MY NOTES';
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.8em;
+            font-weight: 700;
+            color: rgba(92, 64, 51, 0.5);
+            transform: rotate(-10deg);
+            border: 2px dashed rgba(92, 64, 51, 0.3);
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        /* The date stamp, moved to the bottom left */
+        .note-date {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 0.8em;
+            font-weight: 700;
+            color: #5c4033;
+        }
+
+        /* The delete button on each note */
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 0.8em;
+            cursor: pointer;
+            line-height: 25px;
+            text-align: center;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .delete-btn:hover {
+            opacity: 1;
+        }
+
+        /* General modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 20;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff9e6;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #5c4033;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            padding: 8px 15px;
+            font-family: inherit;
+            background-color: #d8c3a5;
+            color: #5c4033;
+            border: 1px solid #5c4033;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Styling for the viewing mode content */
+        .view-title {
+            font-size: 2em;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        .view-content {
+            text-align: left;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        .view-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #5c4033;
+            margin-top: 15px;
+            display: block;
+        }
+        .view-date-stamp {
+            font-size: 0.8em;
+            font-weight: 700;
+            color: #5c4033;
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        /* Password modal styling */
+        #password-modal, #setup-modal, #forgot-password-modal {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        #password-modal p, #setup-modal p, #forgot-password-modal p {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        /* Container for password input and toggle button */
+        .password-input-container {
+            position: relative;
+            width: 80%;
+            max-width: 300px;
+            margin-bottom: 10px;
+        }
+        .password-input-container input, .password-input-container select {
+            width: 100%;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 1em;
+            border: 2px solid #5c4033;
+            border-radius: 5px;
+            box-sizing: border-box; /* Ensures padding doesn't affect total width */
+        }
+        .password-input-container input[type="password"],
+        .password-input-container input[type="text"] {
+            padding-right: 40px; /* Make space for the icon */
+        }
+        .password-toggle-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #5c4033;
+        }
+        #password-modal button, #setup-modal button, #forgot-password-modal button {
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 1.2em;
+            background-color: #b8947f;
+            color: #f5f5dc;
+            border: 2px solid #5c4033;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #password-error, #setup-error, #forgot-password-error {
+            color: #d9534f;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Application Title -->
+        <h1 class="app-title">My Notes</h1>
+
+        <!-- Password Modal (Initially hidden by default, shown by JS) -->
+        <div id="password-modal" class="modal">
+            <div class="modal-content">
+                <p id="password-message"></p>
+                <div class="password-input-container">
+                    <input type="password" id="password-input" placeholder="Enter password">
+                    <button id="password-toggle-btn" class="password-toggle-btn">
+                        <!-- Eye icon as inline SVG -->
+                        <svg id="eye-open-icon" style="display: block;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg id="eye-closed-icon" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off">
+                            <path d="M10.53 9.47a2.5 2.5 0 0 0-3.54 3.54"/>
+                            <path d="M19.894 13.918a10 10 0 0 1-15.698 1.954"/>
+                            <path d="M7 7a10 10 0 0 0 11.53 3.53"/>
+                            <path d="m2 2 20 20"/>
+                        </svg>
+                    </button>
+                </div>
+                <button id="password-submit-btn">Submit</button>
+                <button id="forgot-password-btn" style="background-color: transparent; color: #5c4033; border: none; text-decoration: underline; margin-top: 10px;">Forgot Password?</button>
+                <div id="password-error" style="display: none;">Incorrect password. Please try again.</div>
+            </div>
+        </div>
+        
+        <!-- Password Setup Modal (Initially hidden by default, shown by JS) -->
+        <div id="setup-modal" class="modal">
+            <div class="modal-content">
+                <p>Welcome! Please set a password and a security question:</p>
+                <div class="password-input-container">
+                    <input type="password" id="setup-password-input" placeholder="Set your password">
+                    <button id="setup-password-toggle-btn" class="password-toggle-btn">
+                        <svg id="setup-eye-open-icon" style="display: block;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg id="setup-eye-closed-icon" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off">
+                            <path d="M10.53 9.47a2.5 2.5 0 0 0-3.54 3.54"/>
+                            <path d="M19.894 13.918a10 10 0 0 1-15.698 1.954"/>
+                            <path d="M7 7a10 10 0 0 0 11.53 3.53"/>
+                            <path d="m2 2 20 20"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="password-input-container">
+                    <select id="security-question-select">
+                        <option value="">-- Choose a security question --</option>
+                        <option value="What is your favorite subject?">What is your favorite subject?</option>
+                        <option value="What is your favorite song?">What is your favorite song?</option>
+                        <option value="What is your favorite movie?">What is your favorite movie?</option>
+                        <option value="What is your favorite book?">What is your favorite book?</option>
+                        <option value="What is your favorite food?">What is your favorite food?</option>
+                        <option value="Who is your best friend?">Who is your best friend?</option>
+                    </select>
+                </div>
+                <input type="text" id="security-answer-input" placeholder="Enter your answer">
+                <button id="setup-submit-btn">Set Password</button>
+                <div id="setup-error" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Forgot Password Modal (Initially hidden by default, shown by JS) -->
+        <div id="forgot-password-modal" class="modal">
+            <div class="modal-content">
+                <p>Please select your security question and provide the answer to reset your password.</p>
+                <div class="password-input-container">
+                    <select id="forgot-password-question-select">
+                        <option value="">-- Choose your security question --</option>
+                        <option value="What is your favorite subject?">What is your favorite subject?</option>
+                        <option value="What is your favorite song?">What is your favorite song?</option>
+                        <option value="What is your favorite movie?">What is your favorite movie?</option>
+                        <option value="What is your favorite book?">What is your favorite book?</option>
+                        <option value="What is your favorite food?">What is your favorite food?</option>
+                        <option value="Who is your best friend?">Who is your best friend?</option>
+                    </select>
+                </div>
+                <input type="text" id="forgot-password-answer-input" placeholder="Enter your answer">
+                <button id="forgot-password-submit-btn">Submit</button>
+                <button id="forgot-password-cancel-btn" style="background-color: transparent; color: #5c4033; border: none; text-decoration: underline; margin-top: 10px;">Cancel</button>
+                <div id="forgot-password-error" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Main app content container (Initially hidden) -->
+        <div id="app-content" style="display: none;">
+            <!-- Button to open the note editor -->
+            <button class="add-note-btn" id="add-note-btn">Add New Note</button>
+
+            <!-- Note Editor Section (initially hidden) -->
+            <div class="note-editor" id="note-editor">
+                <input type="text" id="note-title" placeholder="Note Title">
+                
+                <!-- Controls for highlighting and underlining -->
+                <div class="controls">
+                    <button id="underline-btn">Underline</button>
+                    <button id="highlight-btn">Highlight</button>
+                    <label for="image-upload" style="cursor: pointer; padding: 8px 15px; background-color: #d8c3a5; color: #5c4033; border: 1px solid #5c4033; border-radius: 5px;">Add/Change Image</label>
+                    <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                </div>
+
+                <!-- Content area with contenteditable for rich text editing -->
+                <div class="content-editor" id="note-content" contenteditable="true">Write your note here...</div>
+
+                <button class="add-note-btn" id="save-note-btn" style="margin-top: 15px; background-color: #8c785b;">Save Note</button>
+                <button class="add-note-btn" id="cancel-note-btn" style="margin-top: 15px; background-color: #d9534f; border-color: #d9534f;">Cancel</button>
+            </div>
+
+            <!-- Container where all the saved notes will be displayed -->
+            <div class="notes-container" id="notes-container">
+                <!-- Notes will be dynamically added here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Custom modal for delete confirmation -->
+        <div id="delete-modal" class="modal">
+            <div class="modal-content">
+                <p>Are you sure you want to delete this note?</p>
+                <div class="modal-buttons">
+                    <button id="confirm-delete-btn">Yes</button>
+                    <button id="cancel-delete-btn">No</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom modal for viewing mode -->
+        <div id="view-modal" class="modal">
+            <div class="modal-content">
+                <h3 class="view-title" id="view-title"></h3>
+                <div class="view-content" id="view-content"></div>
+                <div class="view-date-stamp" id="view-date"></div>
+                <div class="modal-buttons">
+                    <button id="edit-view-btn">Edit Note</button>
+                    <button id="close-view-btn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Getting references to all the necessary DOM elements
+        const passwordModal = document.getElementById('password-modal');
+        const passwordMessage = document.getElementById('password-message');
+        const passwordInput = document.getElementById('password-input');
+        const passwordSubmitBtn = document.getElementById('password-submit-btn');
+        const passwordError = document.getElementById('password-error');
+        const passwordToggleBtn = document.getElementById('password-toggle-btn');
+        const eyeOpenIcon = document.getElementById('eye-open-icon');
+        const eyeClosedIcon = document.getElementById('eye-closed-icon');
+        const forgotPasswordBtn = document.getElementById('forgot-password-btn');
+        
+        const setupModal = document.getElementById('setup-modal');
+        const setupPasswordInput = document.getElementById('setup-password-input');
+        const setupPasswordToggleBtn = document.getElementById('setup-password-toggle-btn');
+        const setupEyeOpenIcon = document.getElementById('setup-eye-open-icon');
+        const setupEyeClosedIcon = document.getElementById('setup-eye-closed-icon');
+        const securityQuestionSelect = document.getElementById('security-question-select');
+        const securityAnswerInput = document.getElementById('security-answer-input');
+        const setupSubmitBtn = document.getElementById('setup-submit-btn');
+        const setupError = document.getElementById('setup-error');
+        
+        const forgotPasswordModal = document.getElementById('forgot-password-modal');
+        const forgotPasswordQuestionSelect = document.getElementById('forgot-password-question-select');
+        const forgotPasswordAnswerInput = document.getElementById('forgot-password-answer-input');
+        const forgotPasswordSubmitBtn = document.getElementById('forgot-password-submit-btn');
+        const forgotPasswordCancelBtn = document.getElementById('forgot-password-cancel-btn');
+        const forgotPasswordError = document.getElementById('forgot-password-error');
+
+        const appContent = document.getElementById('app-content');
+        const addNoteBtn = document.getElementById('add-note-btn');
+        const noteEditor = document.getElementById('note-editor');
+        const saveNoteBtn = document.getElementById('save-note-btn');
+        const cancelNoteBtn = document.getElementById('cancel-note-btn');
+        const noteTitleInput = document.getElementById('note-title');
+        const noteContentDiv = document.getElementById('note-content');
+        const notesContainer = document.getElementById('notes-container');
+        const imageUploadInput = document.getElementById('image-upload');
+        const underlineBtn = document.getElementById('underline-btn');
+        const highlightBtn = document.getElementById('highlight-btn');
+        const deleteModal = document.getElementById('delete-modal');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+        const viewModal = document.getElementById('view-modal');
+        const viewTitle = document.getElementById('view-title');
+        const viewContent = document.getElementById('view-content');
+        const viewDate = document.getElementById('view-date');
+        const editViewBtn = document.getElementById('edit-view-btn');
+        const closeViewBtn = document.getElementById('close-view-btn');
+
+        // Initializing notes array and variables for managing state
+        let notes = [];
+        let noteToDelete = null;
+        let editingNoteIndex = null;
+        const passwordKey = 'notesPassword';
+        const securityQuestionKey = 'securityQuestion';
+        const securityAnswerKey = 'securityAnswer';
+
+        // --- Password Logic ---
+        
+        // This function now correctly handles the initial page load to show the right modal.
+        function checkInitialState() {
+            const savedPassword = localStorage.getItem(passwordKey);
+            
+            if (!savedPassword) {
+                // No password exists, this is the first time. Show the setup modal.
+                setupModal.style.display = 'flex';
+                passwordModal.style.display = 'none';
+                forgotPasswordModal.style.display = 'none';
+            } else {
+                // Password exists. Show the login modal.
+                passwordModal.style.display = 'flex';
+                setupModal.style.display = 'none';
+                forgotPasswordModal.style.display = 'none';
+                passwordMessage.textContent = 'Please enter your password to access your notes:';
+            }
+        }
+
+        function unlockApp() {
+            passwordModal.style.display = 'none';
+            setupModal.style.display = 'none';
+            forgotPasswordModal.style.display = 'none';
+            appContent.style.display = 'block';
+            loadNotes();
+        }
+
+        function handlePasswordSubmit() {
+            const inputPassword = passwordInput.value;
+            const savedPassword = localStorage.getItem(passwordKey);
+
+            if (inputPassword === savedPassword) {
+                unlockApp();
+            } else {
+                passwordError.textContent = 'Incorrect password. Please try again.';
+                passwordError.style.display = 'block';
+            }
+        }
+        
+        // Function to toggle password visibility
+        function togglePasswordVisibility(inputElement, openIcon, closedIcon) {
+            if (inputElement.type === 'password') {
+                inputElement.type = 'text';
+                openIcon.style.display = 'none';
+                closedIcon.style.display = 'block';
+            } else {
+                inputElement.type = 'password';
+                openIcon.style.display = 'block';
+                closedIcon.style.display = 'none';
+            }
+        }
+
+        function handleSetupSubmit() {
+            const newPassword = setupPasswordInput.value;
+            const securityQuestion = securityQuestionSelect.value;
+            const securityAnswer = securityAnswerInput.value;
+
+            if (newPassword.length > 0 && securityQuestion !== '' && securityAnswer.length > 0) {
+                localStorage.setItem(passwordKey, newPassword);
+                localStorage.setItem(securityQuestionKey, securityQuestion);
+                localStorage.setItem(securityAnswerKey, securityAnswer);
+                unlockApp();
+            } else {
+                setupError.textContent = 'All fields are required to set a password.';
+                setupError.style.display = 'block';
+            }
+        }
+
+        function handleForgotPassword() {
+            const savedQuestion = localStorage.getItem(securityQuestionKey);
+            if (savedQuestion) {
+                passwordModal.style.display = 'none';
+                forgotPasswordModal.style.display = 'flex';
+                forgotPasswordAnswerInput.value = '';
+                forgotPasswordError.style.display = 'none';
+                forgotPasswordQuestionSelect.value = ''; // Reset dropdown
+            } else {
+                passwordError.textContent = 'No security question found. Password cannot be reset.';
+                passwordError.style.display = 'block';
+            }
+        }
+
+        function handleForgotPasswordSubmit() {
+            const savedQuestion = localStorage.getItem(securityQuestionKey);
+            const savedAnswer = localStorage.getItem(securityAnswerKey);
+
+            if (forgotPasswordQuestionSelect.value === savedQuestion && forgotPasswordAnswerInput.value === savedAnswer) {
+                forgotPasswordModal.style.display = 'none';
+                setupModal.style.display = 'flex';
+                setupPasswordInput.value = '';
+                securityQuestionSelect.value = savedQuestion; // Pre-select the question for the user
+                securityAnswerInput.value = savedAnswer; // Pre-fill the answer for convenience
+                setupError.textContent = 'Correct! Please set your new password.';
+                setupError.style.display = 'block';
+            } else {
+                forgotPasswordError.textContent = 'Incorrect question or answer. Please try again.';
+                forgotPasswordError.style.display = 'block';
+            }
+        }
+
+        passwordSubmitBtn.addEventListener('click', handlePasswordSubmit);
+        passwordInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                handlePasswordSubmit();
+            }
+        });
+        passwordToggleBtn.addEventListener('click', () => togglePasswordVisibility(passwordInput, eyeOpenIcon, eyeClosedIcon));
+        forgotPasswordBtn.addEventListener('click', handleForgotPassword);
+
+        setupSubmitBtn.addEventListener('click', handleSetupSubmit);
+        setupPasswordToggleBtn.addEventListener('click', () => togglePasswordVisibility(setupPasswordInput, setupEyeOpenIcon, setupEyeClosedIcon));
+        
+        forgotPasswordSubmitBtn.addEventListener('click', handleForgotPasswordSubmit);
+        forgotPasswordCancelBtn.addEventListener('click', () => {
+            forgotPasswordModal.style.display = 'none';
+            passwordModal.style.display = 'flex';
+        });
+
+        // --- Core App Logic ---
+
+        // Function to load notes from localStorage when the app starts
+        function loadNotes() {
+            try {
+                const savedNotes = localStorage.getItem('myNotes');
+                if (savedNotes) {
+                    notes = JSON.parse(savedNotes);
+                    renderNotes();
+                }
+            } catch (e) {
+                console.error("Failed to load notes from localStorage:", e);
+                notes = [];
+            }
+        }
+
+        // Function to save notes to localStorage
+        function saveNotes() {
+            try {
+                localStorage.setItem('myNotes', JSON.stringify(notes));
+            } catch (e) {
+                console.error("Failed to save notes to localStorage:", e);
+            }
+        }
+
+        // Function to render all notes on the page
+        function renderNotes() {
+            notesContainer.innerHTML = ''; // Clear the container first
+            notes.forEach((note, index) => {
+                const noteItem = document.createElement('div');
+                noteItem.classList.add('note-item');
+                noteItem.innerHTML = `
+                    <button class="delete-btn" data-index="${index}">X</button>
+                    <div class="note-date">${note.date}</div>
+                    <h3>${note.title}</h3>
+                    <div class="note-content-display">${note.content}</div>
+                `;
+                if (note.image) {
+                    const img = document.createElement('img');
+                    img.src = note.image;
+                    noteItem.querySelector('.note-content-display').appendChild(img);
+                }
+                
+                noteItem.addEventListener('click', (event) => {
+                    if (event.target.classList.contains('delete-btn')) {
+                        return;
+                    }
+                    viewNote(index);
+                });
+
+                notesContainer.appendChild(noteItem);
+            });
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', handleDeleteClick);
+            });
+        }
+
+        // Function to show the note in viewing mode
+        function viewNote(index) {
+            const note = notes[index];
+            viewTitle.textContent = note.title;
+            viewContent.innerHTML = note.content; 
+            viewDate.textContent = note.date;
+
+            const existingImage = viewContent.querySelector('.view-image');
+            if (existingImage) {
+                existingImage.remove();
+            }
+            if (note.image) {
+                const img = document.createElement('img');
+                img.src = note.image;
+                img.classList.add('view-image');
+                viewContent.appendChild(img);
+            }
+            
+            editViewBtn.dataset.index = index;
+            viewModal.style.display = 'flex';
+        }
+
+        // Function to open the editor with existing note data
+        function editNote(index) {
+            editingNoteIndex = index;
+            const note = notes[index];
+            noteTitleInput.value = note.title;
+            noteContentDiv.innerHTML = note.content;
+            noteEditor.classList.add('active');
+            addNoteBtn.style.display = 'none';
+            viewModal.style.display = 'none';
+        }
+
+        // Function to handle the delete button click
+        function handleDeleteClick(event) {
+            event.stopPropagation();
+            noteToDelete = event.target.dataset.index;
+            deleteModal.style.display = 'flex';
+        }
+
+        // Event listener for the "Add Note" button
+        addNoteBtn.addEventListener('click', () => {
+            editingNoteIndex = null;
+            noteEditor.classList.add('active');
+            addNoteBtn.style.display = 'none';
+            noteTitleInput.value = '';
+            noteContentDiv.innerHTML = 'Write your note here...';
+            imageUploadInput.value = '';
+        });
+
+        // Event listener for the "Cancel" button
+        cancelNoteBtn.addEventListener('click', () => {
+            noteEditor.classList.remove('active');
+            addNoteBtn.style.display = 'block';
+            noteTitleInput.value = '';
+            noteContentDiv.innerHTML = 'Write your note here...';
+            imageUploadInput.value = '';
+            editingNoteIndex = null;
+        });
+
+        // Event listener for the "Save Note" button
+        saveNoteBtn.addEventListener('click', () => {
+            const title = noteTitleInput.value || "Untitled Note";
+            const content = noteContentDiv.innerHTML;
+            
+            const file = imageUploadInput.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    saveNote(title, content, reader.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                const existingImage = (editingNoteIndex !== null && notes[editingNoteIndex]) ? notes[editingNoteIndex].image : null;
+                saveNote(title, content, existingImage);
+            }
+        });
+        
+        function saveNote(title, content, image) {
+            let noteDate;
+            if (editingNoteIndex !== null) {
+                noteDate = notes[editingNoteIndex].date;
+            } else {
+                const today = new Date();
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                noteDate = today.toLocaleDateString('en-US', options);
+            }
+
+            const noteData = { title, content, image, date: noteDate };
+            
+            if (editingNoteIndex !== null) {
+                notes[editingNoteIndex] = noteData;
+            } else {
+                notes.push(noteData);
+            }
+            
+            saveNotes();
+            renderNotes();
+            cancelNoteBtn.click();
+        }
+
+        // Event listeners for the rich text editor controls
+        underlineBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            document.execCommand('underline', false, null);
+        });
+        
+        highlightBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            document.execCommand('backColor', false, '#fff000');
+        });
+
+        // Event listeners for the modal
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (noteToDelete !== null) {
+                notes.splice(noteToDelete, 1);
+                saveNotes();
+                renderNotes();
+                noteToDelete = null;
+            }
+            deleteModal.style.display = 'none';
+        });
+
+        cancelDeleteBtn.addEventListener('click', () => {
+            noteToDelete = null;
+            deleteModal.style.display = 'none';
+        });
+        
+        // Event listeners for the viewing modal
+        closeViewBtn.addEventListener('click', () => {
+            viewModal.style.display = 'none';
+        });
+
+        editViewBtn.addEventListener('click', (event) => {
+            const index = event.target.dataset.index;
+            if (index !== null) {
+                editNote(parseInt(index, 10));
+            }
+        });
+
+        // Start the password check when the page first loads
+        window.onload = checkInitialState;
+    </script>
+</body>
+</html>
